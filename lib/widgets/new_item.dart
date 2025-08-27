@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shoppinglist/data/categories.dart';
 import 'package:shoppinglist/models/category.dart';
+import 'package:shoppinglist/models/grocery_item.dart';
 
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
@@ -46,6 +47,14 @@ false — если хотя бы одно поле вернуло ошибку
     // _formKey.currentState!.reset();     // сбросить форму
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      Navigator.of(context).pop(
+        GroceryItem(
+          id: DateTime.now().toString(), 
+          name: _enteredName, 
+          quantity: _enteredQuantity, 
+          category: _selectedCategory
+          ),
+          );
 
       print("======FORM=======");
       print(_enteredName);

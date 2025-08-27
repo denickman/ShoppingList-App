@@ -2,7 +2,7 @@ import 'package:shoppinglist/models/grocery_item.dart';
 import 'package:shoppinglist/data/categories.dart';
 import 'package:shoppinglist/models/category.dart';
 
-final groceryItems = [
+final dummyGroceryItems = [
   GroceryItem(
       id: 'a',
       name: 'Milk',
