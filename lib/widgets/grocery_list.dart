@@ -1,7 +1,10 @@
+import 'dart:convert'; // for json
 import 'package:flutter/material.dart';
+import 'package:shoppinglist/data/categories.dart';
 // import 'package:shoppinglist/data/dummy_items.dart';
 import 'package:shoppinglist/widgets/new_item.dart';
 import 'package:shoppinglist/models/grocery_item.dart';
+import 'package:http/http.dart' as http;
 
 class GroceryList extends StatefulWidget {
   const GroceryList({super.key});
@@ -11,9 +14,17 @@ class GroceryList extends StatefulWidget {
 }
 
 class _GroceryListState extends State<GroceryList> {
-  final List<GroceryItem> _groceyItems = [];
+  List<GroceryItem> _groceyItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadItems();
+  }
 
   void _addItem() async {
+    // option # 1 - Without BACKEND
+    /*
     // push always yields a future that hold a data that maybe return from the pushed screen
     final newItem = await Navigator.of(
       context,
@@ -27,11 +38,51 @@ class _GroceryListState extends State<GroceryList> {
     setState(() {
       _groceyItems.add(newItem);
     });
+  */
+
+    // option # 2 - With BACKEND
+
+    await Navigator.of(
+      context,
+    ).push<GroceryItem>(MaterialPageRoute(builder: (ctx) => const NewItem()));
+
+    _loadItems();
   }
 
   void _removeItem(GroceryItem item) {
     setState(() {
-       _groceyItems.remove(item);
+      _groceyItems.remove(item);
+    });
+  }
+
+  void _loadItems() async {
+    final url = Uri.https(
+      'shoppinglistflutter-e661d-default-rtdb.firebaseio.com',
+      'shlist.json',
+    );
+
+    final response = await http.get(url);
+    final Map<String, dynamic> listData = json.decode(response.body);
+    final List<GroceryItem> loadedItemList = [];
+
+    for (final item in listData.entries) {
+      final category = categories.entries
+          .firstWhere(
+            (catItem) => catItem.value.title == item.value['category'],
+          )
+          .value;
+
+      loadedItemList.add(
+        GroceryItem(
+          id: item.key,
+          name: item.value['name'],
+          quantity: item.value['quantity'],
+          category: category,
+        ),
+      );
+    }
+    setState(() {
+      _groceyItems = loadedItemList;
     });
   }
 

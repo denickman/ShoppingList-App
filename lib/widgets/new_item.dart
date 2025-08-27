@@ -43,7 +43,7 @@ false — если хотя бы одно поле вернуло ошибку
   var _enteredQuantity = 1;
   var _selectedCategory = categories[Categories.vegetables]!;
 
-  void _saveItem() {
+  void _saveItem() async {
     //currentState - это ссылка на текущее состояние формы (FormState), связанное с этим ключом.
     // _formKey.currentState!.validate();  // проверить все поля
     // _formKey.currentState!.save();      // вызвать onSaved для всех полей
@@ -57,7 +57,8 @@ false — если хотя бы одно поле вернуло ошибку
       );
 
       // send request to Firebase
-      http.post(
+      // post - return a Future
+      final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
@@ -66,6 +67,19 @@ false — если хотя бы одно поле вернуло ошибку
           "category": _selectedCategory.title,
         }),
       );
+
+      print("======RESPONSE=======");
+      print(response.statusCode);
+      print(response.body);
+
+      // новая защита от ошибок во Flutter
+      // флаг .mounted — показывает, всё ещё ли виджет "живой" в дереве виджетов.
+      // Если виджет уже удалили (dispose() вызван), то context.mounted == false.
+      if (!context.mounted) {
+        return;
+      }
+
+      Navigator.of(context).pop();
 
       // Navigator.of(context).pop(
       //   GroceryItem(
@@ -76,11 +90,10 @@ false — если хотя бы одно поле вернуло ошибку
       //   ),
       // );
 
-      print("======FORM=======");
-      print(url);
-      print(_enteredName);
-      print(_enteredQuantity);
-      print(_selectedCategory);
+      // print("======FORM=======");
+      // print(_enteredName);
+      // print(_enteredQuantity);
+      // print(_selectedCategory);
     }
   }
 
