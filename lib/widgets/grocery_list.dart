@@ -13,8 +13,6 @@ class GroceryList extends StatefulWidget {
   State<GroceryList> createState() => _GroceryListState();
 }
 
-
-
 class _GroceryListState extends State<GroceryList> {
   // ====== Properties ======
   List<GroceryItem> _groceyItems = [];
@@ -105,24 +103,40 @@ class _GroceryListState extends State<GroceryList> {
     });
   }
 
-  void _removeItem(GroceryItem item) {
+  void _removeItem(GroceryItem item) async {
+    final index = _groceyItems.indexOf(item);
+
     setState(() {
       _groceyItems.remove(item);
     });
+
+    // send delete request
+    final url = Uri.https(
+      'shoppinglistflutter-e661d-default-rtdb.firebaseio.com',
+      'shlist/${item.id}.json',
+    );
+
+    final response = await http.delete(url);
+
+    if (response.statusCode >= 400) {
+      setState(() {
+        _groceyItems.insert(index, item);
+      });
+    }
   }
 
   void _loadItems() async {
     final url = Uri.https(
-      'xxxshoppinglistflutter-e661d-default-rtdb.firebaseio.com',
+      'shoppinglistflutter-e661d-default-rtdb.firebaseio.com',
       'shlist.json',
     );
 
     final response = await http.get(url);
 
     if (response.statusCode >= 400) {
-       setState(() {
-              _error = 'Failed to fetch data. Please try again later';
-       });
+      setState(() {
+        _error = 'Failed to fetch data. Please try again later';
+      });
     }
 
     final Map<String, dynamic> listData = json.decode(response.body);
