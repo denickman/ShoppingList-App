@@ -35,68 +35,17 @@ false — если хотя бы одно поле вернуло ошибку
 ✅ Эффект: key: _formKey,
 Введённый текст, выбранные значения, ошибки валидации — всё сохраняется при перерисовке.
 Без ключа Form и TextFormField могли бы сброситься, потому что Flutter создаст новый State.
-
 */
+
+  // ====== Properties ======
   final _formKey = GlobalKey<FormState>();
 
   var _enteredName = '';
   var _enteredQuantity = 1;
   var _selectedCategory = categories[Categories.vegetables]!;
+  var _isSending = false;
 
-  void _saveItem() async {
-    //currentState - это ссылка на текущее состояние формы (FormState), связанное с этим ключом.
-    // _formKey.currentState!.validate();  // проверить все поля
-    // _formKey.currentState!.save();      // вызвать onSaved для всех полей
-    // _formKey.currentState!.reset();     // сбросить форму
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      // shoppinglistflutter-e661d
-      final url = Uri.https(
-        'shoppinglistflutter-e661d-default-rtdb.firebaseio.com',
-        'shlist.json',
-      );
-
-      // send request to Firebase
-      // post - return a Future
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          "name": _enteredName,
-          "quantity": _enteredQuantity,
-          "category": _selectedCategory.title,
-        }),
-      );
-
-      print("======RESPONSE=======");
-      print(response.statusCode);
-      print(response.body);
-
-      // новая защита от ошибок во Flutter
-      // флаг .mounted — показывает, всё ещё ли виджет "живой" в дереве виджетов.
-      // Если виджет уже удалили (dispose() вызван), то context.mounted == false.
-      if (!context.mounted) {
-        return;
-      }
-
-      Navigator.of(context).pop();
-
-      // Navigator.of(context).pop(
-      //   GroceryItem(
-      //     id: DateTime.now().toString(),
-      //     name: _enteredName,
-      //     quantity: _enteredQuantity,
-      //     category: _selectedCategory,
-      //   ),
-      // );
-
-      // print("======FORM=======");
-      // print(_enteredName);
-      // print(_enteredQuantity);
-      // print(_selectedCategory);
-    }
-  }
-
+  // ====== Lifecycle ======
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -188,16 +137,31 @@ false — если хотя бы одно поле вернуло ошибку
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  // Если onPressed = null, кнопка автоматически становится неактивной (disabled).
                   TextButton(
-                    onPressed: () {
-                      _formKey.currentState!.reset();
-                    },
-                    child: const Text("Reset"),
+                    onPressed: _isSending
+                        ? null
+                        : () {
+                            _formKey.currentState!.reset();
+                          },
+                    child: _isSending
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text("Reset"),
                   ),
 
                   ElevatedButton(
-                    onPressed: _saveItem,
-                    child: const Text("Add item"),
+                    onPressed: _isSending ? null : _saveItem,
+                    child: _isSending
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text("Add item"),
                   ),
                 ],
               ),
@@ -206,5 +170,66 @@ false — если хотя бы одно поле вернуло ошибку
         ),
       ),
     );
+  }
+
+  // ====== Methods ======
+  void _saveItem() async {
+    //currentState - это ссылка на текущее состояние формы (FormState), связанное с этим ключом.
+    // _formKey.currentState!.validate();  // проверить все поля
+    // _formKey.currentState!.save();      // вызвать onSaved для всех полей
+    // _formKey.currentState!.reset();     // сбросить форму
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      setState(() {
+        _isSending = true;
+      });
+
+      final url = Uri.https(
+        'shoppinglistflutter-e661d-default-rtdb.firebaseio.com',
+        'shlist.json',
+      );
+
+      // send request to Firebase
+      // post - return a Future
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          "name": _enteredName,
+          "quantity": _enteredQuantity,
+          "category": _selectedCategory.title,
+        }),
+      );
+
+      print("======RESPONSE=======");
+      print(response.statusCode);
+      print(response.body);
+
+      // новая защита от ошибок во Flutter
+      // флаг .mounted — показывает, всё ещё ли виджет "живой" в дереве виджетов.
+      // Если виджет уже удалили (dispose() вызван), то context.mounted == false.
+
+      if (!context.mounted) {
+        return;
+      }
+
+      // response from Firebase return to us an ID from Firebase, we can use it
+      final Map<String, dynamic> resData = json.decode(response.body);
+
+      Navigator.of(context).pop(
+        GroceryItem(
+          id: resData['name'],
+          name: _enteredName,
+          quantity: _enteredQuantity,
+          category: _selectedCategory,
+        ),
+      );
+
+      // print("======FORM=======");
+      // print(_enteredName);
+      // print(_enteredQuantity);
+      // print(_selectedCategory);
+    }
   }
 }

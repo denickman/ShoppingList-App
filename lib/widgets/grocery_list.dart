@@ -14,13 +14,56 @@ class GroceryList extends StatefulWidget {
 }
 
 class _GroceryListState extends State<GroceryList> {
+  // ====== Properties ======
   List<GroceryItem> _groceyItems = [];
+  var _isLoading = true;
 
+  // ====== Lifecycle ======
   @override
   void initState() {
     super.initState();
     _loadItems();
   }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget content = const Center(child: Text('No items added yet!'));
+
+    if (_isLoading) {
+      content = const Center(child: CircularProgressIndicator());
+    }
+
+    if (_groceyItems.isNotEmpty) {
+      content = ListView.builder(
+        itemCount: _groceyItems.length,
+        itemBuilder: (ctx, index) => Dismissible(
+          onDismissed: (direction) {
+            _removeItem(_groceyItems[index]);
+          },
+          key: ValueKey(_groceyItems[index].id),
+          child: ListTile(
+            title: Text(_groceyItems[index].name),
+            leading: Container(
+              width: 24,
+              height: 24,
+              color: _groceyItems[index].category.color,
+            ),
+            trailing: Text(_groceyItems[index].quantity.toString()),
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Your Groceries'),
+        actions: [IconButton(onPressed: _addItem, icon: const Icon(Icons.add))],
+      ),
+      body: content,
+    );
+  }
+
+  // ====== Methods ======
 
   void _addItem() async {
     // option # 1 - Without BACKEND
@@ -42,11 +85,17 @@ class _GroceryListState extends State<GroceryList> {
 
     // option # 2 - With BACKEND
 
-    await Navigator.of(
+    final newItem = await Navigator.of(
       context,
     ).push<GroceryItem>(MaterialPageRoute(builder: (ctx) => const NewItem()));
 
-    _loadItems();
+    if (newItem == null) {
+      return;
+    }
+
+    setState(() {
+      _groceyItems.add(newItem);
+    });
   }
 
   void _removeItem(GroceryItem item) {
@@ -83,40 +132,7 @@ class _GroceryListState extends State<GroceryList> {
     }
     setState(() {
       _groceyItems = loadedItemList;
+      _isLoading = false;
     });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    Widget content = const Center(child: Text('No items added yet!'));
-
-    if (_groceyItems.isNotEmpty) {
-      content = ListView.builder(
-        itemCount: _groceyItems.length,
-        itemBuilder: (ctx, index) => Dismissible(
-          onDismissed: (direction) {
-            _removeItem(_groceyItems[index]);
-          },
-          key: ValueKey(_groceyItems[index].id),
-          child: ListTile(
-            title: Text(_groceyItems[index].name),
-            leading: Container(
-              width: 24,
-              height: 24,
-              color: _groceyItems[index].category.color,
-            ),
-            trailing: Text(_groceyItems[index].quantity.toString()),
-          ),
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Your Groceries'),
-        actions: [IconButton(onPressed: _addItem, icon: const Icon(Icons.add))],
-      ),
-      body: content,
-    );
   }
 }
