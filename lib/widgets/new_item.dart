@@ -1,7 +1,10 @@
+import 'dart:convert'; // for json
+
 import 'package:flutter/material.dart';
 import 'package:shoppinglist/data/categories.dart';
 import 'package:shoppinglist/models/category.dart';
 import 'package:shoppinglist/models/grocery_item.dart';
+import 'package:http/http.dart' as http; // you can set any name you want
 
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
@@ -47,16 +50,34 @@ false — если хотя бы одно поле вернуло ошибку
     // _formKey.currentState!.reset();     // сбросить форму
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      Navigator.of(context).pop(
-        GroceryItem(
-          id: DateTime.now().toString(), 
-          name: _enteredName, 
-          quantity: _enteredQuantity, 
-          category: _selectedCategory
-          ),
-          );
+      // shoppinglistflutter-e661d
+      final url = Uri.https(
+        'shoppinglistflutter-e661d-default-rtdb.firebaseio.com',
+        'shlist.json',
+      );
+
+      // send request to Firebase
+      http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          "name": _enteredName,
+          "quantity": _enteredQuantity,
+          "category": _selectedCategory.title,
+        }),
+      );
+
+      // Navigator.of(context).pop(
+      //   GroceryItem(
+      //     id: DateTime.now().toString(),
+      //     name: _enteredName,
+      //     quantity: _enteredQuantity,
+      //     category: _selectedCategory,
+      //   ),
+      // );
 
       print("======FORM=======");
+      print(url);
       print(_enteredName);
       print(_enteredQuantity);
       print(_selectedCategory);
@@ -112,7 +133,7 @@ false — если хотя бы одно поле вернуло ошибку
                         return null; // indeed a valid input value here
                       },
                       onSaved: (value) {
-                            _enteredQuantity = int.parse(value!);
+                        _enteredQuantity = int.parse(value!);
                       },
                     ),
                   ),
@@ -141,7 +162,7 @@ false — если хотя бы одно поле вернуло ошибку
                       ],
                       onChanged: (value) {
                         setState(() {
-                             _selectedCategory = value!;
+                          _selectedCategory = value!;
                         });
                       },
                     ),
