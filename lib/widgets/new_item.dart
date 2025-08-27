@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shoppinglist/data/categories.dart';
+import 'package:shoppinglist/models/category.dart';
 
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
@@ -34,12 +35,23 @@ false — если хотя бы одно поле вернуло ошибку
 */
   final _formKey = GlobalKey<FormState>();
 
+  var _enteredName = '';
+  var _enteredQuantity = 1;
+  var _selectedCategory = categories[Categories.vegetables]!;
+
   void _saveItem() {
     //currentState - это ссылка на текущее состояние формы (FormState), связанное с этим ключом.
     // _formKey.currentState!.validate();  // проверить все поля
     // _formKey.currentState!.save();      // вызвать onSaved для всех полей
     // _formKey.currentState!.reset();     // сбросить форму
-    _formKey.currentState!.validate();
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      print("======FORM=======");
+      print(_enteredName);
+      print(_enteredQuantity);
+      print(_selectedCategory);
+    }
   }
 
   @override
@@ -64,6 +76,9 @@ false — если хотя бы одно поле вернуло ошибку
                   }
                   return null; // indeed a valid input value here
                 },
+                onSaved: (value) {
+                  _enteredName = value!; // value can be null
+                },
               ), // instead of TextField
 
               Row(
@@ -77,7 +92,7 @@ false — если хотя бы одно поле вернуло ошибку
                         label: Text('Quantity'),
                       ),
                       keyboardType: TextInputType.number,
-                      initialValue: '1',
+                      initialValue: _enteredQuantity.toString(),
                       validator: (value) {
                         if (value == null ||
                             value.isEmpty ||
@@ -87,6 +102,9 @@ false — если хотя бы одно поле вернуло ошибку
                         }
                         return null; // indeed a valid input value here
                       },
+                      onSaved: (value) {
+                            _enteredQuantity = int.parse(value!);
+                      },
                     ),
                   ),
                   const SizedBox(width: 24),
@@ -94,6 +112,7 @@ false — если хотя бы одно поле вернуло ошибку
                   Expanded(
                     child: DropdownButtonFormField(
                       // unconstrained horizontally !!!! CAREFUL
+                      initialValue: _selectedCategory,
                       items: [
                         for (final category in categories.entries)
                           DropdownMenuItem(
@@ -111,7 +130,11 @@ false — если хотя бы одно поле вернуло ошибку
                             ),
                           ),
                       ],
-                      onChanged: (value) {},
+                      onChanged: (value) {
+                        setState(() {
+                             _selectedCategory = value!;
+                        });
+                      },
                     ),
                   ),
                 ],
@@ -122,7 +145,12 @@ false — если хотя бы одно поле вернуло ошибку
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: () {}, child: const Text("Reset")),
+                  TextButton(
+                    onPressed: () {
+                      _formKey.currentState!.reset();
+                    },
+                    child: const Text("Reset"),
+                  ),
 
                   ElevatedButton(
                     onPressed: _saveItem,
