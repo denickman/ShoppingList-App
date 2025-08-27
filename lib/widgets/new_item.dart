@@ -24,29 +24,49 @@ class _NewItemState extends State<NewItem> {
                 maxLength: 50,
                 decoration: const InputDecoration(label: Text('Name')),
                 validator: (value) {
-                  return 'Demo...';
+                  if (value == null ||
+                      value.isEmpty ||
+                      value.trim().length <= 1 ||
+                      value.trim().length > 50) {
+                           return 'Must be between 1 and 50 characters.';
+                      }
+                      return null; // indeed a valid input value here
                 },
               ), // instead of TextField
 
               Row(
-                crossAxisAlignment: CrossAxisAlignment.end, // for elements alignment 
+                crossAxisAlignment:
+                    CrossAxisAlignment.end, // for elements alignment
                 children: [
                   Expanded(
-                    child: TextFormField( // unconstrained horizontally !!!! CAREFUL
-                      decoration: const InputDecoration(label: Text('Quantity')),
+                    child: TextFormField(
+                      // unconstrained horizontally !!!! CAREFUL
+                      decoration: const InputDecoration(
+                        label: Text('Quantity'),
+                      ),
                       initialValue: '1',
+                       validator: (value) {
+                  if (value == null ||
+                      value.isEmpty ||
+                      int.tryParse(value) == null ||
+                      int.tryParse(value)! <= 0) {
+                           return 'Must be a valid positive logic.';
+                      }
+                      return null; // indeed a valid input value here
+                },
                     ),
                   ),
                   const SizedBox(width: 24),
 
                   Expanded(
-                    child: DropdownButtonFormField(  // unconstrained horizontally !!!! CAREFUL
+                    child: DropdownButtonFormField(
+                      // unconstrained horizontally !!!! CAREFUL
                       items: [
                         for (final category in categories.entries)
                           DropdownMenuItem(
                             value: category.value,
                             child: Row(
-                              children:[
+                              children: [
                                 Container(
                                   width: 16,
                                   height: 16,
@@ -58,10 +78,22 @@ class _NewItemState extends State<NewItem> {
                             ),
                           ),
                       ],
-                      onChanged: (value) {
-                    
-                      },
+                      onChanged: (value) {},
                     ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(onPressed: () {}, child: const Text("Reset")),
+
+                  ElevatedButton(
+                    onPressed: () {},
+                    child: const Text("Add item"),
                   ),
                 ],
               ),
